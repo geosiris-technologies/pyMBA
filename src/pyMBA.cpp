@@ -97,6 +97,8 @@ struct python_mba {
 	    float64 min_x = *std::min_element(begin(x_arr), end(x_arr));
 	    float64 max_y = *std::max_element(begin(y_arr), end(y_arr));
 	    float64 min_y = *std::min_element(begin(y_arr), end(y_arr));
+	    
+	std::cout << min_x << " " << max_x << " " << min_y << " " << max_y << std::endl;
 
         // following lines allow one to extend the generated surface of coef %
         float64 coef_u = extension_u/100.;
@@ -104,6 +106,8 @@ struct python_mba {
 
         float64 size_x = std::fabs(max_x - min_x);
         float64 size_y = std::fabs(max_y - min_y);
+	    
+	std::cout << size_x << " " << size_y << std::endl;
 
 	    mba->setDomain(min_x-coef_u*size_x, min_y-coef_v*size_y, max_x+coef_u*size_x, max_y+coef_v*size_y);
 
