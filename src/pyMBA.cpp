@@ -127,6 +127,7 @@ struct python_mba {
         mba->MBAalg(m0, n0, level);
 
        surf = mba->getSplineSurface();
+	std::cout << surf.umin() << " " << surf.umax() << " " << surf.vmin() << " " << surf.vmax() << std::endl;
     }
 
     float64 umin()
