@@ -1,12 +1,14 @@
 #include <vector> 
 #include <memory>
 #include <algorithm>
-#include <cstdint>
+
 
 // #include <iostream>
 // #include <string>
 // #include <sstream>
 // #include <functional>
+
+#include "algos.h"
 
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
@@ -18,8 +20,7 @@
 #include <PointAccessUtils.h>
 
 namespace py = pybind11;
-using float64 = double;
-using uint32 = std::uint32_t;
+
 
 template<typename T>
 auto inline begin(std::shared_ptr<T> ptr) -> typename T::iterator { return ptr->begin(); }
@@ -92,6 +93,11 @@ struct python_mba {
         std::vector<float64> data(numpy_array.size());
         std::copy(numpy_array.data(), numpy_array.data()+numpy_array.size(), data.begin());
         return data;
+    }
+
+    void compute_fault()
+    {
+
     }
 
     void compute_horizon()
@@ -192,6 +198,7 @@ void register_mba(py::module &m) {
                     >(), py::arg("x"), py::arg("y"), py::arg("z"), py::arg("extension_u"), py::arg("extension_v"), py::arg("level")
             )
         .def("compute_horizon", &python_mba::compute_horizon)
+        .def("compute_fault", &python_mba::compute_fault)
         .def("u_min", &python_mba::umin)
         .def("v_min", &python_mba::vmin)
         .def("u_max", &python_mba::umax)

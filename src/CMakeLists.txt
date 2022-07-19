@@ -34,6 +34,8 @@ endif("${isSystemDir}" STREQUAL "-1")
 set(CMAKE_BUILD_TYPE "Release")
 # set(CMAKE_MACOSX_RPATH 1)
 
+find_package(PkgConfig)
+pkg_search_module(Eigen3 REQUIRED eigen3)
 find_package(pybind11 REQUIRED)
 find_package(mba REQUIRED)
 
