@@ -5,12 +5,19 @@
 using float64 = double;
 using uint32 = std::uint32_t;
 
+enum Orientation2D
+{
+	ALIGNED = 0,
+	RIGHT,
+	LEFT
+};
+
+
 // Prints convex hull of a set of n points.
 // https://www.geeksforgeeks.org/quickhull-algorithm-convex-hull/
 template <typename ATTR>
 std::vector<uint32> convex_hull(const ATTR& positions)
 {
-	using namespace cgogn::geometry;
 
 	uint32 n = positions.size();
 
