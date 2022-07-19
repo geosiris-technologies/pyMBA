@@ -96,9 +96,9 @@ struct python_mba {
 
     void compute_horizon()
     {        
-        x_arr = std::make_shared<std::vector<float64>>(make_available(_x_arr));
-        y_arr = std::make_shared<std::vector<float64>>(make_available(_y_arr));
-        z_arr = std::make_shared<std::vector<float64>>(make_available(_z_arr));
+        x_arr = std::make_shared<std::vector<float64>>(make_available(b_x_arr));
+        y_arr = std::make_shared<std::vector<float64>>(make_available(b_y_arr));
+        z_arr = std::make_shared<std::vector<float64>>(make_available(b_z_arr));
 
         compute(x_arr, y_arr, z_arr);
     }
