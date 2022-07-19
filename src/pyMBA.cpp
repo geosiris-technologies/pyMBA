@@ -41,7 +41,7 @@ struct python_mba {
     py::array_t<float64> b_y_arr;
     py::array_t<float64> b_z_arr;
 
-    py::array_t<VEC3> values_;
+    py::array_t<float64> values_;
 
 
     std::shared_ptr<MBA> mba;
@@ -99,7 +99,7 @@ struct python_mba {
     // }
 
     python_mba(
-        py::array_t<VEC3> values,
+        py::array_t<float64> values,
         float64 extension_u,
         float64 extension_v,
         uint32 level
@@ -134,29 +134,30 @@ struct python_mba {
 
     void compute_fault()
     {
-        // Eigen::MatrixXd values;
+        Eigen::MatrixXd eig_mat;
 
-        // for (int i = 0; i < 100; i++)
-        //     for (int j = 0; j < 100; j++)
-        //         values(i,j,0) = b_x_arr
+        auto r = values_.unchecked<3>(); // x must have ndim = 3; can be non-writeable
+        double sum = 0;
+        for (py::ssize_t i = 0; i < r.shape(0); i++)
+            eig_mat.row(i) = Eigen::VectorXd(r(i, 0), r(i, 1), r(i, 2));
+
     }
 
     void compute_horizon()
     {   
-        auto x_arr = std::make_shared<std::vector<float64>>(r.shape(0));
-        auto y_arr = std::make_shared<std::vector<float64>>(r.shape(1));
-        auto z_arr = std::make_shared<std::vector<float64>>(r.shape(2));
+        auto r = values_.unchecked<2>(); // x must have ndim = 3; can be non-writeable
 
-        auto r = values_.unchecked<3>(); // x must have ndim = 3; can be non-writeable
-        double sum = 0;
-        std::size_t a = 0;
-        for (py::ssize_t i = 0; i < r.shape(0); i++)
-            for (py::ssize_t j = 0; j < r.shape(1); j++)
-                // for (py::ssize_t k = 0; k < r.shape(2); k++)
-                x_arr[a] = r(i, j, 0);
-                y_arr[a] = r(i, j, 1);
-                z_arr[a] = r(i, j, 2);
-                a++;
+        auto x_arr = std::make_shared<std::vector<float64>>(r.shape(0));
+        auto y_arr = std::make_shared<std::vector<float64>>(r.shape(0));
+        auto z_arr = std::make_shared<std::vector<float64>>(r.shape(0));
+
+        for(py::ssize_t i = 0; i < r.shape(0); i++)
+        {
+            x_arr[i] = r(i,0);
+            y_arr[i] = r(i,1);
+            z_arr[i] = r(i,2);
+            a++;
+        }
 
         for(auto& x: x_arr)
             std::cout << x << " ";
@@ -257,7 +258,7 @@ void register_mba(py::module &m) {
         //             >(), py::arg("x"), py::arg("y"), py::arg("z"), py::arg("extension"), py::arg("level")
         //     )
         .def(py::init<
-                    py::array_t<VEC3>,
+                    py::array_t<float64>,
                     float64,
                     float64,
                     uint32
@@ -284,6 +285,6 @@ void register_mba(py::module &m) {
 }   
 
 PYBIND11_MODULE(pyMBA, m) {
-    PYBIND11_NUMPY_DTYPE(VEC3, x, y, z);
+    // PYBIND11_NUMPY_DTYPE(VEC3, x, y, z);
     register_mba(m);
 }
