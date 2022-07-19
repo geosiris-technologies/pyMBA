@@ -51,54 +51,54 @@ struct python_mba {
     float64 extension_u_;
     float64 extension_v_;
 
+    // python_mba(
+    //     py::array_t<float64> _x_arr,
+    //     py::array_t<float64> _y_arr,
+    //     py::array_t<float64> _z_arr,
+    //     float64 extension_u,
+    //     float64 extension_v,
+    //     uint32 level
+    //     )
+    // {
+    //     if (_x_arr.ndim() != 1 || _y_arr.ndim() != 1 || _z_arr.ndim() != 1)
+    //         throw std::runtime_error("Number of dimensions must be one");
+
+    //     if (_x_arr.size() != _y_arr.size() || _x_arr.size() != _z_arr.size() ||  _y_arr.size() != _z_arr.size())
+    //         throw std::runtime_error("Input shapes must match");
+
+    //     // init(_x_arr, _y_arr, _z_arr, extension_u, extension_v, level);
+    //     b_x_arr = _x_arr;
+    //     b_y_arr = _y_arr;
+    //     b_z_arr = _z_arr;
+    //     level_ = level;
+    //     extension_u_ = extension_u;
+    //     extension_v_ = extension_v;
+    // }
+
+    // python_mba(
+    //     py::array_t<float64> _x_arr,
+    //     py::array_t<float64> _y_arr,
+    //     py::array_t<float64> _z_arr,
+    //     float64 extension,
+    //     uint32 level
+    //     )
+    // {
+    //     if (_x_arr.ndim() != 1 || _y_arr.ndim() != 1 || _z_arr.ndim() != 1)
+    //         throw std::runtime_error("Number of dimensions must be one");
+
+    //     if (_x_arr.size() != _y_arr.size() || _x_arr.size() != _z_arr.size() ||  _y_arr.size() != _z_arr.size())
+    //         throw std::runtime_error("Input shapes must match");
+
+    //     //init(_x_arr, _y_arr, _z_arr, extension, extension, level);
+    //     b_x_arr = _x_arr;
+    //     b_y_arr = _y_arr;
+    //     b_z_arr = _z_arr;
+    //     level_ = level;
+    //     extension_u_ = extension;
+    //     extension_v_ = extension;
+    // }
+
     python_mba(
-        py::array_t<float64> _x_arr,
-        py::array_t<float64> _y_arr,
-        py::array_t<float64> _z_arr,
-        float64 extension_u,
-        float64 extension_v,
-        uint32 level
-        )
-    {
-        if (_x_arr.ndim() != 1 || _y_arr.ndim() != 1 || _z_arr.ndim() != 1)
-            throw std::runtime_error("Number of dimensions must be one");
-
-        if (_x_arr.size() != _y_arr.size() || _x_arr.size() != _z_arr.size() ||  _y_arr.size() != _z_arr.size())
-            throw std::runtime_error("Input shapes must match");
-
-        // init(_x_arr, _y_arr, _z_arr, extension_u, extension_v, level);
-        b_x_arr = _x_arr;
-        b_y_arr = _y_arr;
-        b_z_arr = _z_arr;
-        level_ = level;
-        extension_u_ = extension_u;
-        extension_v_ = extension_v;
-    }
-
-    python_mba(
-        py::array_t<float64> _x_arr,
-        py::array_t<float64> _y_arr,
-        py::array_t<float64> _z_arr,
-        float64 extension,
-        uint32 level
-        )
-    {
-        if (_x_arr.ndim() != 1 || _y_arr.ndim() != 1 || _z_arr.ndim() != 1)
-            throw std::runtime_error("Number of dimensions must be one");
-
-        if (_x_arr.size() != _y_arr.size() || _x_arr.size() != _z_arr.size() ||  _y_arr.size() != _z_arr.size())
-            throw std::runtime_error("Input shapes must match");
-
-        //init(_x_arr, _y_arr, _z_arr, extension, extension, level);
-        b_x_arr = _x_arr;
-        b_y_arr = _y_arr;
-        b_z_arr = _z_arr;
-        level_ = level;
-        extension_u_ = extension;
-        extension_v_ = extension;
-    }
-
-        python_mba(
         py::array_t<VEC3> values,
         float64 extension_u,
         float64 extension_v,
@@ -221,29 +221,29 @@ void register_mba(py::module &m) {
     std::string desc = "Multilevel B-spline Approximation";
 
     py::class_<python_mba>(m, name.c_str(), desc.c_str())
-        .def(py::init<
-                    py::array_t<float64>,
-                    py::array_t<float64>,
-                    py::array_t<float64>,
-                    float64,
-                    uint32
-                    >(), py::arg("x"), py::arg("y"), py::arg("z"), py::arg("extension"), py::arg("level")
-            )
+        // .def(py::init<
+        //             py::array_t<float64>,
+        //             py::array_t<float64>,
+        //             py::array_t<float64>,
+        //             float64,
+        //             uint32
+        //             >(), py::arg("x"), py::arg("y"), py::arg("z"), py::arg("extension"), py::arg("level")
+        //     )
         .def(py::init<
                     py::array_t<VEC3>,
                     float64,
                     uint32
                     >(), py::arg("values"), py::arg("extension"), py::arg("level")
             )
-        .def(py::init<
-                    py::array_t<float64>,
-                    py::array_t<float64>,
-                    py::array_t<float64>,
-                    float64,
-                    float64,
-                    uint32
-                    >(), py::arg("x"), py::arg("y"), py::arg("z"), py::arg("extension_u"), py::arg("extension_v"), py::arg("level")
-            )
+        // .def(py::init<
+        //             py::array_t<float64>,
+        //             py::array_t<float64>,
+        //             py::array_t<float64>,
+        //             float64,
+        //             float64,
+        //             uint32
+        //             >(), py::arg("x"), py::arg("y"), py::arg("z"), py::arg("extension_u"), py::arg("extension_v"), py::arg("level")
+        //     )
         .def("compute_horizon", &python_mba::compute_horizon)
         .def("compute_fault", &python_mba::compute_fault)
         .def("u_min", &python_mba::umin)
