@@ -88,7 +88,7 @@ struct python_mba {
     }
 
     std::vector<float64> make_available(py::array_t<float64> numpy_array)
-    
+    {
         std::vector<float64> data(numpy_array.size());
         std::copy(numpy_array.data(), numpy_array.data()+numpy_array.size(), data.begin());
         return data;
