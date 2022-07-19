@@ -28,11 +28,21 @@ auto inline begin(std::shared_ptr<T> ptr) -> typename T::iterator { return ptr->
 template<typename T>
 auto inline end(std::shared_ptr<T> ptr) -> typename T::iterator { return ptr->end(); }
 
+struct VEC3 {
+    float64 x;
+    float64 y;
+    float64 z;
+};
+
+
 struct python_mba {
     
     py::array_t<float64> b_x_arr;
     py::array_t<float64> b_y_arr;
     py::array_t<float64> b_z_arr;
+
+    py::array_t<VEC3> values_;
+
 
     std::shared_ptr<MBA> mba;
     UCBspl::SplineSurface surf;
@@ -88,6 +98,26 @@ struct python_mba {
         extension_v_ = extension;
     }
 
+        python_mba(
+        py::array_t<VEC3> values,
+        float64 extension_u,
+        float64 extension_v,
+        uint32 level
+        )
+    {
+        // if (_x_arr.ndim() != 1 || _y_arr.ndim() != 1 || _z_arr.ndim() != 1)
+        //     throw std::runtime_error("Number of dimensions must be one");
+
+        // if (_x_arr.size() != _y_arr.size() || _x_arr.size() != _z_arr.size() ||  _y_arr.size() != _z_arr.size())
+        //     throw std::runtime_error("Input shapes must match");
+
+        // init(_x_arr, _y_arr, _z_arr, extension_u, extension_v, level);
+        values_ = values;
+        level_ = level;
+        extension_u_ = extension_u;
+        extension_v_ = extension_v;
+    }
+
     std::vector<float64> make_available(py::array_t<float64>& numpy_array)
     {
         std::vector<float64> data(numpy_array.size());
@@ -95,16 +125,28 @@ struct python_mba {
         return data;
     }
 
+    py::array do_slice(py::array a, py::int_ start, py::int_ stop) 
+    {
+        auto res = a[py::make_tuple(py::slice(start, stop, 1), py::slice(start, stop, 1))];
+        return res;
+    }
+}
+
+
     void compute_fault()
     {
+        Eigen::MatrixXd values;
 
+        for (int i = 0; i < 100; i++)
+            for (int j = 0; j < 100; j++)
+                values(i,j,0) = b_x_arr
     }
 
     void compute_horizon()
     {        
         auto x_arr = std::make_shared<std::vector<float64>>(make_available(b_x_arr));
         auto y_arr = std::make_shared<std::vector<float64>>(make_available(b_y_arr));
-        auto z_arr = std::make_shared<std::vector<float64>>(make_available(b_z_arr));
+        auto z_arr = std::make_shared<std::vector<float64>>(make_available(b_z_arr  ));
 
         compute(x_arr, y_arr, z_arr);
     }
@@ -189,6 +231,12 @@ void register_mba(py::module &m) {
                     >(), py::arg("x"), py::arg("y"), py::arg("z"), py::arg("extension"), py::arg("level")
             )
         .def(py::init<
+                    py::array_t<VEC3>
+                    float64,
+                    uint32
+                    >(), py::arg("values"), py::arg("extension"), py::arg("level")
+            )
+        .def(py::init<
                     py::array_t<float64>,
                     py::array_t<float64>,
                     py::array_t<float64>,
@@ -209,5 +257,6 @@ void register_mba(py::module &m) {
 }   
 
 PYBIND11_MODULE(pyMBA, m) {
+    PYBIND11_NUMPY_DTYPE(VEC3, x, y, z);
     register_mba(m);
 }
