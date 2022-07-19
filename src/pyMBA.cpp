@@ -30,9 +30,9 @@ auto inline end(std::shared_ptr<T> ptr) -> typename T::iterator { return ptr->en
 
 struct python_mba {
     
-    py::buffer_info b_x_arr;
-    py::buffer_info b_y_arr;
-    py::buffer_info b_z_arr;
+    py::array_t<float64> b_x_arr;
+    py::array_t<float64> b_y_arr;
+    py::array_t<float64> b_z_arr;
 
     std::shared_ptr<MBA> mba;
     UCBspl::SplineSurface surf;
@@ -57,9 +57,9 @@ struct python_mba {
             throw std::runtime_error("Input shapes must match");
 
         // init(_x_arr, _y_arr, _z_arr, extension_u, extension_v, level);
-        b_x_arr = _x_arr.request();
-        b_y_arr = _y_arr.request();
-        b_z_arr = _z_arr.request();
+        b_x_arr = _x_arr;
+        b_y_arr = _y_arr;
+        b_z_arr = _z_arr;
         level_ = level;
         extension_u_ = extension_u;
         extension_v_ = extension_v;
@@ -80,9 +80,9 @@ struct python_mba {
             throw std::runtime_error("Input shapes must match");
 
         //init(_x_arr, _y_arr, _z_arr, extension, extension, level);
-        b_x_arr = _x_arr.request();
-        b_y_arr = _y_arr.request();
-        b_z_arr = _z_arr.request();
+        b_x_arr = _x_arr;
+        b_y_arr = _y_arr;
+        b_z_arr = _z_arr;
         level_ = level;
         extension_u_ = extension;
         extension_v_ = extension;
