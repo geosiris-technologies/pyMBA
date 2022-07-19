@@ -142,10 +142,37 @@ struct python_mba {
     }
 
     void compute_horizon()
-    {        
-        auto x_arr = std::make_shared<std::vector<float64>>(make_available(b_x_arr));
-        auto y_arr = std::make_shared<std::vector<float64>>(make_available(b_y_arr));
-        auto z_arr = std::make_shared<std::vector<float64>>(make_available(b_z_arr  ));
+    {   
+        auto x_arr = std::make_shared<std::vector<float64>>(r.shape(0));
+        auto y_arr = std::make_shared<std::vector<float64>>(r.shape(1));
+        auto z_arr = std::make_shared<std::vector<float64>>(r.shape(2));
+
+        auto r = values_.unchecked<3>(); // x must have ndim = 3; can be non-writeable
+        double sum = 0;
+        std::size_t a = 0;
+        for (py::ssize_t i = 0; i < r.shape(0); i++)
+            for (py::ssize_t j = 0; j < r.shape(1); j++)
+                // for (py::ssize_t k = 0; k < r.shape(2); k++)
+                x_arr[a] = r(i, j, 0);
+                y_arr[a] = r(i, j, 1);
+                z_arr[a] = r(i, j, 2);
+                a++;
+
+        for(auto& x: x_arr)
+            std::cout << x << " ";
+        std::cout << std::endl;
+
+        for(auto& y: y_arr)
+            std::cout << y << " ";
+        std::cout << std::endl;
+
+        for(auto& z: z_arr)
+            std::cout << z << " ";
+        std::cout << std::endl;
+
+        // auto x_arr = std::make_shared<std::vector<float64>>(make_available(b_x_arr));
+        // auto y_arr = std::make_shared<std::vector<float64>>(make_available(b_y_arr));
+        // auto z_arr = std::make_shared<std::vector<float64>>(make_available(b_z_arr  ));
 
         compute(x_arr, y_arr, z_arr);
     }
