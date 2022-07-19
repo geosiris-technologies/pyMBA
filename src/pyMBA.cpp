@@ -134,12 +134,12 @@ struct python_mba {
 
     void compute_fault()
     {
-        Eigen::MatrixXd eig_mat;
+        // Eigen::MatrixXd eig_mat(r.shape(0), r.shape(1));
 
-        auto r = values_.unchecked<3>(); // x must have ndim = 3; can be non-writeable
-        double sum = 0;
-        for (py::ssize_t i = 0; i < r.shape(0); i++)
-            eig_mat.row(i) = Eigen::VectorXd(r(i, 0), r(i, 1), r(i, 2));
+        // auto r = values_.unchecked<3>(); // x must have ndim = 3; can be non-writeable
+        // double sum = 0;
+        // for (py::ssize_t i = 0; i < r.shape(0); i++)
+        //     eig_mat.row(i) = Eigen::VectorXd(r(i, 0), r(i, 1), r(i, 2));
 
     }
 
@@ -160,14 +160,15 @@ struct python_mba {
         }
 
         for(auto& x: x_arr)
+        for (auto it = begin(x_arr); it != end(x_arr); ++it)
             std::cout << x << " ";
         std::cout << std::endl;
 
-        for(auto& y: y_arr)
+        for (auto it = begin(y_arr); it != end(y_arr); ++it)
             std::cout << y << " ";
         std::cout << std::endl;
 
-        for(auto& z: z_arr)
+        for (auto it = begin(z_arr); it != end(z_arr); ++it)
             std::cout << z << " ";
         std::cout << std::endl;
 
