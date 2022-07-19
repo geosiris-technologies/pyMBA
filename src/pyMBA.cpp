@@ -130,7 +130,6 @@ struct python_mba {
         auto res = a[py::make_tuple(py::slice(start, stop, 1), py::slice(start, stop, 1))];
         return res;
     }
-}
 
 
     void compute_fault()
@@ -231,7 +230,7 @@ void register_mba(py::module &m) {
                     >(), py::arg("x"), py::arg("y"), py::arg("z"), py::arg("extension"), py::arg("level")
             )
         .def(py::init<
-                    py::array_t<VEC3>
+                    py::array_t<VEC3>,
                     float64,
                     uint32
                     >(), py::arg("values"), py::arg("extension"), py::arg("level")
