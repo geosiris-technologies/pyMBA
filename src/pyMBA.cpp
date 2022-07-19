@@ -29,12 +29,16 @@ auto inline end(std::shared_ptr<T> ptr) -> typename T::iterator { return ptr->en
 
 struct python_mba {
     
-    std::shared_ptr<std::vector<float64>> x_arr;
-    std::shared_ptr<std::vector<float64>> y_arr;
-    std::shared_ptr<std::vector<float64>> z_arr;
+    py::buffer_info b_x_arr;
+    py::buffer_info b_y_arr;
+    py::buffer_info b_z_arr;
 
     std::shared_ptr<MBA> mba;
     UCBspl::SplineSurface surf;
+
+    float64 level_;
+    float64 extension_u_;
+    float64 extension_v_;
 
     python_mba(
         py::array_t<float64> _x_arr,
@@ -51,7 +55,13 @@ struct python_mba {
         if (_x_arr.size() != _y_arr.size() || _x_arr.size() != _z_arr.size() ||  _y_arr.size() != _z_arr.size())
             throw std::runtime_error("Input shapes must match");
 
-        init(_x_arr, _y_arr, _z_arr, extension_u, extension_v, level);
+        // init(_x_arr, _y_arr, _z_arr, extension_u, extension_v, level);
+        b_x_arr = _x_arr.request();
+        b_y_arr = _y_arr.request();
+        b_z_arr = _z_arr.request();
+        level_ = level;
+        extension_u_ = extension_u;
+        extension_v_ = extension_v;
     }
 
     python_mba(
@@ -68,29 +78,35 @@ struct python_mba {
         if (_x_arr.size() != _y_arr.size() || _x_arr.size() != _z_arr.size() ||  _y_arr.size() != _z_arr.size())
             throw std::runtime_error("Input shapes must match");
 
-        init(_x_arr, _y_arr, _z_arr, extension, extension, level);
+        //init(_x_arr, _y_arr, _z_arr, extension, extension, level);
+        b_x_arr = _x_arr.request();
+        b_y_arr = _y_arr.request();
+        b_z_arr = _z_arr.request();
+        level_ = level;
+        extension_u_ = extension;
+        extension_v_ = extension;
     }
 
     std::vector<float64> make_available(py::array_t<float64> numpy_array)
-    {
+    
         std::vector<float64> data(numpy_array.size());
         std::copy(numpy_array.data(), numpy_array.data()+numpy_array.size(), data.begin());
         return data;
     }
 
-    void init(
-        py::array_t<float64> _x_arr,
-        py::array_t<float64> _y_arr,
-        py::array_t<float64> _z_arr,
-        float64 extension_u,
-        float64 extension_v,
-        uint32 level
-        )
-    {
+    void compute_horizon()
+    {        
         x_arr = std::make_shared<std::vector<float64>>(make_available(_x_arr));
         y_arr = std::make_shared<std::vector<float64>>(make_available(_y_arr));
         z_arr = std::make_shared<std::vector<float64>>(make_available(_z_arr));
 
+        compute(x_arr, y_arr, z_arr);
+    }
+
+    void compute(std::shared_ptr<std::vector<float64>> x_arr,
+                std::shared_ptr<std::vector<float64>> y_arr,
+                std::shared_ptr<std::vector<float64>> z_arr)
+    {
         mba = std::make_shared<MBA>(x_arr, y_arr, z_arr);
 
         float64 max_x = *std::max_element(begin(x_arr), end(x_arr));
@@ -99,8 +115,8 @@ struct python_mba {
 	    float64 min_y = *std::min_element(begin(y_arr), end(y_arr));
 
         // following lines allow one to extend the generated surface of coef %
-        float64 coef_u = extension_u/100.;
-        float64 coef_v = extension_v/100.;
+        float64 coef_u = extension_u_/100.;
+        float64 coef_v = extension_v_/100.;
 
         float64 size_x = std::fabs(max_x - min_x);
         float64 size_y = std::fabs(max_y - min_y);
@@ -120,9 +136,9 @@ struct python_mba {
             n0 = 1;
         if (m0 == 0)
             m0 = 1;
-        mba->MBAalg(m0, n0, level);
+        mba->MBAalg(m0, n0, level_);
 
-       surf = mba->getSplineSurface();
+        surf = mba->getSplineSurface();
     }
 
     float64 umin()
@@ -166,6 +182,16 @@ void register_mba(py::module &m) {
                     uint32
                     >(), py::arg("x"), py::arg("y"), py::arg("z"), py::arg("extension"), py::arg("level")
             )
+        .def(py::init<
+                    py::array_t<float64>,
+                    py::array_t<float64>,
+                    py::array_t<float64>,
+                    float64,
+                    float64,
+                    uint32
+                    >(), py::arg("x"), py::arg("y"), py::arg("z"), py::arg("extension_u"), py::arg("extension_v"), py::arg("level")
+            )
+        .def("compute_horizon", &python_mba::compute_horizon)
         .def("u_min", &python_mba::umin)
         .def("v_min", &python_mba::vmin)
         .def("u_max", &python_mba::umax)
