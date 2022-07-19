@@ -232,8 +232,9 @@ void register_mba(py::module &m) {
         .def(py::init<
                     py::array_t<VEC3>,
                     float64,
+                    float64,
                     uint32
-                    >(), py::arg("values"), py::arg("extension"), py::arg("level")
+                    >(), py::arg("values"), py::arg("extension_u"), py::arg("extension_v"), py::arg("level")
             )
         // .def(py::init<
         //             py::array_t<float64>,
