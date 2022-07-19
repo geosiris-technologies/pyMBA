@@ -135,11 +135,11 @@ struct python_mba {
 
     void compute_fault()
     {
-        Eigen::MatrixXd values;
+        // Eigen::MatrixXd values;
 
-        for (int i = 0; i < 100; i++)
-            for (int j = 0; j < 100; j++)
-                values(i,j,0) = b_x_arr
+        // for (int i = 0; i < 100; i++)
+        //     for (int j = 0; j < 100; j++)
+        //         values(i,j,0) = b_x_arr
     }
 
     void compute_horizon()
