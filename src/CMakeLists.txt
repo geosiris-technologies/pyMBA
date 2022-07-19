@@ -34,13 +34,12 @@ endif("${isSystemDir}" STREQUAL "-1")
 set(CMAKE_BUILD_TYPE "Release")
 # set(CMAKE_MACOSX_RPATH 1)
 
-find_package(PkgConfig)
-pkg_search_module(Eigen3 REQUIRED eigen3)
+find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 find_package(pybind11 REQUIRED)
 find_package(mba REQUIRED)
 
 pybind11_add_module(pyMBA pyMBA.cpp)
-target_link_libraries(pyMBA PRIVATE mba::mba)
+target_link_libraries(pyMBA PRIVATE mba::mba Eigen3::Eigen)
 target_link_options(pyMBA PUBLIC
     $<$<CXX_COMPILER_ID:GNU>:-Wno-undef>>
 )
