@@ -1,5 +1,6 @@
 #include <vector>
 #include <cstdint>
+#include <limits>
 #include <Eigen/Dense>
 
 using float64 = double;
@@ -12,6 +13,39 @@ enum Orientation2D
 	LEFT
 };
 
+template <class Scalar>
+inline auto almost_equal_absolute(Scalar x, Scalar y, const Scalar epsilon = std::numeric_limits<Scalar>::epsilon() ) -> typename std::enable_if<std::is_floating_point<Scalar>::value, bool>::type
+{
+	static_assert(epsilon > 0);
+	return std::fabs(y - x) < epsilon;
+}
+
+
+/**
+ * return the side of point P w.r.t. the vector (Pb-Pa)
+ * Tells if P is on/right/left of the line (Pa, Pb)
+ * @param P the point
+ * @param Pa origin point
+ * @param Pb end point
+ * @return the orientation
+ */
+template <typename VEC2a, typename VEC2b, typename VEC2c>
+Orientation2D side(const Eigen::MatrixBase<VEC2a>& P, const Eigen::MatrixBase<VEC2b>& Pa, const Eigen::MatrixBase<VEC2c>& Pb)
+{
+	static_assert(is_same_vector<VEC2a,VEC2b,VEC2c>::value, "parameters must have same type");
+	static_assert(is_dim_of<VEC2a, 2>::value, "The size of the vector must be equal to 2.");
+
+	using Scalar = VEC2a::Scalar;
+
+	Scalar p = (P[0] - Pa[0]) * (Pb[1] - Pa[1]) - (Pb[0] - Pa[0]) * (P[1] - Pa[1]) ;
+
+	if (almost_equal_absolute(p, Scalar(0)))
+		return Orientation2D::ALIGNED;
+	else if (p > Scalar(0))
+		return Orientation2D::RIGHT;
+	else
+		return Orientation2D::LEFT;
+}
 
 // Prints convex hull of a set of n points.
 // https://www.geeksforgeeks.org/quickhull-algorithm-convex-hull/
