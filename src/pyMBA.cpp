@@ -159,17 +159,16 @@ struct python_mba {
             a++;
         }
 
-        for(auto& x: x_arr)
         for (auto it = begin(x_arr); it != end(x_arr); ++it)
-            std::cout << x << " ";
+            std::cout << *it << " ";
         std::cout << std::endl;
 
         for (auto it = begin(y_arr); it != end(y_arr); ++it)
-            std::cout << y << " ";
+            std::cout << *it << " ";
         std::cout << std::endl;
 
         for (auto it = begin(z_arr); it != end(z_arr); ++it)
-            std::cout << z << " ";
+            std::cout << *it << " ";
         std::cout << std::endl;
 
         // auto x_arr = std::make_shared<std::vector<float64>>(make_available(b_x_arr));
