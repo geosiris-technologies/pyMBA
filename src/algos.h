@@ -16,7 +16,7 @@ enum Orientation2D
 template <class Scalar>
 inline auto almost_equal_absolute(Scalar x, Scalar y, const Scalar epsilon = std::numeric_limits<Scalar>::epsilon() ) -> typename std::enable_if<std::is_floating_point<Scalar>::value, bool>::type
 {
-	static_assert(epsilon > 0);
+	// static_assert(epsilon > 0);
 	return std::fabs(y - x) < epsilon;
 }
 
