@@ -70,11 +70,12 @@ struct python_mba {
 
     void compute_fault()
     {
-        Eigen::MatrixXd eig_mat(r.shape(0), r.shape(1));
-
-        std::vector<Eigen::Vector3d> points(r.shape(0));
+        // Eigen::MatrixXd eig_mat(r.shape(0), r.shape(1));
 
         auto r = values_.unchecked<2>(); // x must have ndim = 2; can be non-writeable
+
+        std::vector<Eigen::Vector3d> points(r.shape(0));
+        
         for (py::ssize_t i = 0; i < r.shape(0); i++)
             points[i] = Eigen::Vector3d(r(i, 0), r(i, 1), r(i, 2));
 
