@@ -153,9 +153,9 @@ struct python_mba {
 
         for(py::ssize_t i = 0; i < r.shape(0); i++)
         {
-            *x_arr[i] = r(i,0);
-            *y_arr[i] = r(i,1);
-            *z_arr[i] = r(i,2);
+            (*x_arr)[i] = r(i,0);
+            (*y_arr)[i] = r(i,1);
+            (*z_arr)[i] = r(i,2);
         }
 
         for (auto it = begin(x_arr); it != end(x_arr); ++it)
