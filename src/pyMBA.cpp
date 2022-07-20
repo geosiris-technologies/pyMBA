@@ -28,21 +28,9 @@ auto inline begin(std::shared_ptr<T> ptr) -> typename T::iterator { return ptr->
 template<typename T>
 auto inline end(std::shared_ptr<T> ptr) -> typename T::iterator { return ptr->end(); }
 
-struct VEC3 {
-    float64 x;
-    float64 y;
-    float64 z;
-};
-
-
 struct python_mba {
     
-    py::array_t<float64> b_x_arr;
-    py::array_t<float64> b_y_arr;
-    py::array_t<float64> b_z_arr;
-
     py::array_t<float64> values_;
-
 
     std::shared_ptr<MBA> mba;
     UCBspl::SplineSurface surf;
@@ -51,53 +39,6 @@ struct python_mba {
     float64 extension_u_;
     float64 extension_v_;
 
-    // python_mba(
-    //     py::array_t<float64> _x_arr,
-    //     py::array_t<float64> _y_arr,
-    //     py::array_t<float64> _z_arr,
-    //     float64 extension_u,
-    //     float64 extension_v,
-    //     uint32 level
-    //     )
-    // {
-    //     if (_x_arr.ndim() != 1 || _y_arr.ndim() != 1 || _z_arr.ndim() != 1)
-    //         throw std::runtime_error("Number of dimensions must be one");
-
-    //     if (_x_arr.size() != _y_arr.size() || _x_arr.size() != _z_arr.size() ||  _y_arr.size() != _z_arr.size())
-    //         throw std::runtime_error("Input shapes must match");
-
-    //     // init(_x_arr, _y_arr, _z_arr, extension_u, extension_v, level);
-    //     b_x_arr = _x_arr;
-    //     b_y_arr = _y_arr;
-    //     b_z_arr = _z_arr;
-    //     level_ = level;
-    //     extension_u_ = extension_u;
-    //     extension_v_ = extension_v;
-    // }
-
-    // python_mba(
-    //     py::array_t<float64> _x_arr,
-    //     py::array_t<float64> _y_arr,
-    //     py::array_t<float64> _z_arr,
-    //     float64 extension,
-    //     uint32 level
-    //     )
-    // {
-    //     if (_x_arr.ndim() != 1 || _y_arr.ndim() != 1 || _z_arr.ndim() != 1)
-    //         throw std::runtime_error("Number of dimensions must be one");
-
-    //     if (_x_arr.size() != _y_arr.size() || _x_arr.size() != _z_arr.size() ||  _y_arr.size() != _z_arr.size())
-    //         throw std::runtime_error("Input shapes must match");
-
-    //     //init(_x_arr, _y_arr, _z_arr, extension, extension, level);
-    //     b_x_arr = _x_arr;
-    //     b_y_arr = _y_arr;
-    //     b_z_arr = _z_arr;
-    //     level_ = level;
-    //     extension_u_ = extension;
-    //     extension_v_ = extension;
-    // }
-
     python_mba(
         py::array_t<float64> values,
         float64 extension_u,
@@ -105,17 +46,13 @@ struct python_mba {
         uint32 level
         )
     {
-        // if (_x_arr.ndim() != 1 || _y_arr.ndim() != 1 || _z_arr.ndim() != 1)
-        //     throw std::runtime_error("Number of dimensions must be one");
+        if (values.ndim() != 2)
+            throw std::runtime_error("Number of dimensions must be 2");
 
-        // if (_x_arr.size() != _y_arr.size() || _x_arr.size() != _z_arr.size() ||  _y_arr.size() != _z_arr.size())
-        //     throw std::runtime_error("Input shapes must match");
-
-        // init(_x_arr, _y_arr, _z_arr, extension_u, extension_v, level);
         values_ = values;
-        level_ = level;
         extension_u_ = extension_u;
         extension_v_ = extension_v;
+        level_ = level;
     }
 
     std::vector<float64> make_available(py::array_t<float64>& numpy_array)
@@ -131,16 +68,71 @@ struct python_mba {
         return res;
     }
 
-
     void compute_fault()
     {
-        // Eigen::MatrixXd eig_mat(r.shape(0), r.shape(1));
+        Eigen::MatrixXd eig_mat(r.shape(0), r.shape(1));
 
-        // auto r = values_.unchecked<3>(); // x must have ndim = 3; can be non-writeable
-        // double sum = 0;
-        // for (py::ssize_t i = 0; i < r.shape(0); i++)
-        //     eig_mat.row(i) = Eigen::VectorXd(r(i, 0), r(i, 1), r(i, 2));
+        std::vector<Eigen::Vector3d> points(r.shape(0));
 
+        auto r = values_.unchecked<2>(); // x must have ndim = 2; can be non-writeable
+        for (py::ssize_t i = 0; i < r.shape(0); i++)
+            points[i] = Eigen::Vector3d(r(i, 0), r(i, 1), r(i, 2));
+
+        Eigen::Vector4d pca_centroid;
+        compute_3d_centroid(points, pca_centroid);
+        Eigen::Matrix3d covariance;
+        compute_covariance_matrix_normalized(points, pca_centroid, covariance);
+        Eigen::SelfAdjointEigenSolver<Eigen::Matrix3d> eigen_solver(covariance, Eigen::ComputeEigenvectors);
+        Eigen::Matrix3d eigen_vectors_pca = eigen_solver.eigenvectors();
+
+        eigen_vectors_pca.col(0) = eigen_vectors_pca.col(2);
+        eigen_vectors_pca.col(2) = eigen_vectors_pca.col(0).cross(eigen_vectors_pca.col(1));
+
+
+        // Transform the original cloud to the origin where the principal components correspond to the axes.
+        Eigen::Matrix4d projectionTransform(Eigen::Matrix4d::Identity());
+        projectionTransform.block<3,3>(0,0) = eigen_vectors_pca.transpose();
+        projectionTransform.block<3,1>(0,3) = -1. * (projectionTransform.block<3,3>(0,0) * pca_centroid.head<3>());
+
+        Eigen::Matrix4d projectionTransformInv = projectionTransform.inverse();
+
+        std::vector<double> z_save(points.size());
+        std::vector<Eigen::Vector3d> proj_points(points.size());
+        for(uint32 i = 0 ; i < points.size(); ++i)
+        {
+            Eigen::Vector4d p = projectionTransform * points[i].homogeneous();
+            z_save[i] = p[2];
+            proj_points[i][0] = p[0];
+            proj_points[i][1] = p[1];
+            proj_points[i][2] = 0;
+        }
+
+        std::vector<uint32> polygon = convex_hull(proj_points);
+        auto [center, axis0, axis1, extent0, extent1, area] = min_area_rectangle_of_hull<Eigen::Vector3d>(polygon, proj_points);
+
+        Eigen::Matrix3d rot;
+        rot.row(0) = axis0;
+        rot.row(1) = axis1;
+        rot.row(2) = Eigen::Vector3d(0.,0.,1.);
+
+        for(uint32 i = 0 ; i < proj_points.size(); ++i)
+            proj_points[i][2] = z_save[i];
+
+
+        auto x_arr = std::make_shared<std::vector<float64>>();
+        auto y_arr = std::make_shared<std::vector<float64>>();
+        auto z_arr = std::make_shared<std::vector<float64>>();
+
+        for(auto &p : proj_points)
+        {
+            Eigen::Vector3d pp = rot * p;
+
+            x_arr->push_back(pp[0]);
+            y_arr->push_back(pp[1]);
+            z_arr->push_back(pp[2]);
+        }
+
+        compute(x_arr, y_arr, z_arr);
     }
 
     void compute_horizon()
@@ -158,21 +150,17 @@ struct python_mba {
             (*z_arr)[i] = r(i,2);
         }
 
-        for (auto it = begin(x_arr); it != end(x_arr); ++it)
-            std::cout << *it << " ";
-        std::cout << std::endl;
+        // for (auto it = begin(x_arr); it != end(x_arr); ++it)
+        //     std::cout << *it << " ";
+        // std::cout << std::endl;
 
-        for (auto it = begin(y_arr); it != end(y_arr); ++it)
-            std::cout << *it << " ";
-        std::cout << std::endl;
+        // for (auto it = begin(y_arr); it != end(y_arr); ++it)
+        //     std::cout << *it << " ";
+        // std::cout << std::endl;
 
-        for (auto it = begin(z_arr); it != end(z_arr); ++it)
-            std::cout << *it << " ";
-        std::cout << std::endl;
-
-        // auto x_arr = std::make_shared<std::vector<float64>>(make_available(b_x_arr));
-        // auto y_arr = std::make_shared<std::vector<float64>>(make_available(b_y_arr));
-        // auto z_arr = std::make_shared<std::vector<float64>>(make_available(b_z_arr  ));
+        // for (auto it = begin(z_arr); it != end(z_arr); ++it)
+        //     std::cout << *it << " ";
+        // std::cout << std::endl;
 
         compute(x_arr, y_arr, z_arr);
     }
@@ -248,14 +236,6 @@ void register_mba(py::module &m) {
     std::string desc = "Multilevel B-spline Approximation";
 
     py::class_<python_mba>(m, name.c_str(), desc.c_str())
-        // .def(py::init<
-        //             py::array_t<float64>,
-        //             py::array_t<float64>,
-        //             py::array_t<float64>,
-        //             float64,
-        //             uint32
-        //             >(), py::arg("x"), py::arg("y"), py::arg("z"), py::arg("extension"), py::arg("level")
-        //     )
         .def(py::init<
                     py::array_t<float64>,
                     float64,
@@ -263,15 +243,6 @@ void register_mba(py::module &m) {
                     uint32
                     >(), py::arg("values"), py::arg("extension_u"), py::arg("extension_v"), py::arg("level")
             )
-        // .def(py::init<
-        //             py::array_t<float64>,
-        //             py::array_t<float64>,
-        //             py::array_t<float64>,
-        //             float64,
-        //             float64,
-        //             uint32
-        //             >(), py::arg("x"), py::arg("y"), py::arg("z"), py::arg("extension_u"), py::arg("extension_v"), py::arg("level")
-        //     )
         .def("compute_horizon", &python_mba::compute_horizon)
         .def("compute_fault", &python_mba::compute_fault)
         .def("u_min", &python_mba::umin)
@@ -284,6 +255,5 @@ void register_mba(py::module &m) {
 }   
 
 PYBIND11_MODULE(pyMBA, m) {
-    // PYBIND11_NUMPY_DTYPE(VEC3, x, y, z);
     register_mba(m);
 }
