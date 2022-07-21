@@ -40,8 +40,8 @@ struct python_mba {
     Eigen::MatrixXd vertices_;
     Eigen::MatrixXi triangles_;
 
-    uint32 vertex_count;
-    uint32 triangle_count;
+    uint32 vertex_count_;
+    uint32 triangle_count_;
 
     python_mba(
         py::array_t<float64> values,
@@ -57,8 +57,8 @@ struct python_mba {
         extension_u_ = extension_u;
         extension_v_ = extension_v;
         level_ = level;
-        vertex_count = 0;
-        triangle_count = 0;
+        vertex_count_ = 0;
+        triangle_count_ = 0;
     }
 
     void compute_fault(float64 nb_u, float64 nb_v, float64 scale)
@@ -161,7 +161,7 @@ struct python_mba {
 	    float64 dv = (v_max - v_min)/(float64(nb_v-1));
 
         //compute the vertices
-        vertex_count = nb_u * nb_v;
+        vertex_count_ = nb_u * nb_v;
         vertices_ = Eigen::MatrixXd(vertex_count, 3);
         for(uint32 i = 0 ; i < nb_v ; ++i)
         {
@@ -174,7 +174,7 @@ struct python_mba {
         }
 
         //compute the faces
-        triangle_count = 2 * (nb_u - 1) * (nb_v - 1);
+        triangle_count_ = 2 * (nb_u - 1) * (nb_v - 1);
         triangles_ = Eigen::MatrixXi(triangle_count, 3);
         uint32 idx = 0;
         for(uint32 y = 0 ; y < nb_v - 1 ; ++y)
@@ -237,12 +237,12 @@ struct python_mba {
 
     uint32 triangle_count()
     {
-        return triangle_count;
+        return triangle_count_;
     }
     
     uint32 vertex_count()
     {
-        return vertex_count;
+        return vertex_count_;
     }
 	// float64 vmin()
     // {
