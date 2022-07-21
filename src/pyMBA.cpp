@@ -162,7 +162,7 @@ struct python_mba {
 
         //compute the vertices
         vertex_count_ = nb_u * nb_v;
-        vertices_ = Eigen::MatrixXd(vertex_count, 3);
+        vertices_ = Eigen::MatrixXd(vertex_count_, 3);
         for(uint32 i = 0 ; i < nb_v ; ++i)
         {
             float64 v = v_min + i * dv;
@@ -175,7 +175,7 @@ struct python_mba {
 
         //compute the faces
         triangle_count_ = 2 * (nb_u - 1) * (nb_v - 1);
-        triangles_ = Eigen::MatrixXi(triangle_count, 3);
+        triangles_ = Eigen::MatrixXi(triangle_count_, 3);
         uint32 idx = 0;
         for(uint32 y = 0 ; y < nb_v - 1 ; ++y)
         {
