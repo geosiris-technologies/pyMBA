@@ -165,7 +165,7 @@ struct python_mba {
             for(uint32 j = 0 ; j < nb_u; ++j)
             {
                 float64 u = u_min + j * du;
-                vertices_(i*nb_u+j) = Eigen::RowVectorXd(u, v, surf.f(u,v));
+                vertices_.row(i*nb_u+j) = Eigen::RowVectorXd(u, v, surf.f(u,v));
             }
         }
 
@@ -177,12 +177,12 @@ struct python_mba {
         {
             for(uint32 x = 0 ; x < nb_u - 1; ++x)
             {
-                triangles_(idx) = Eigen::RowVectorXi(
+                triangles_.row(idx) = Eigen::RowVectorXi(
                             (x + 0) + (y + 0) * nb_u),
                             ((x + 1) + (y + 0) * nb_u),
                             ((x + 0) + (y + 1) * nb_u));
                 ++idx;
-                triangles_(idx) = Eigen::RowVectorXi(
+                triangles_.row(idx) = Eigen::RowVectorXi(
                             (x + 1) + (y + 0) * nb_u),
                             ((x + 1) + (y + 1) * nb_u),
                             ((x + 0) + (y + 1) * nb_u));
