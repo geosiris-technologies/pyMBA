@@ -5,6 +5,7 @@
 
 using float64 = double;
 using uint32 = std::uint32_t;
+using int32 = std::int32_t;
 
 enum Orientation2D
 {

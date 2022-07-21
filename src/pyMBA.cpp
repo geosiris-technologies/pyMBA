@@ -39,7 +39,7 @@ struct python_mba {
     float64 extension_v_;
 
     Eigen::MatrixXd vertices_;
-    Eigen::MatrixXd triangles_;
+    Eigen::MatrixXi triangles_;
 
     python_mba(
         py::array_t<float64> values,
@@ -82,7 +82,7 @@ struct python_mba {
         projectionTransform.block<3,3>(0,0) = eigen_vectors_pca.transpose();
         projectionTransform.block<3,1>(0,3) = -1. * (projectionTransform.block<3,3>(0,0) * pca_centroid.head<3>());
 
-        projectionTransformInv = projectionTransform.inverse();
+        Eigen::Matrix4d projectionTransformInv = projectionTransform.inverse();
 
         std::vector<double> z_save(points.size());
         std::vector<Eigen::Vector3d> proj_points(points.size());
@@ -98,6 +98,7 @@ struct python_mba {
         std::vector<uint32> polygon = convex_hull(proj_points);
         auto [center, axis0, axis1, extent0, extent1, area] = min_area_rectangle_of_hull<Eigen::Vector3d>(polygon, proj_points);
 
+        Eigen::Matrix3d rot;
         rot.row(0) = axis0;
         rot.row(1) = axis1;
         rot.row(2) = Eigen::Vector3d(0.,0.,1.);
@@ -124,7 +125,7 @@ struct python_mba {
 
     }
 
-    void compute_horizon(int32 nb_u, int32 nb_v, float64 scale)
+    void compute_horizon(uint32 nb_u, uint32 nb_v, float64 scale)
     {   
         auto r = values_.unchecked<2>(); // x must have ndim = 3; can be non-writeable
 
@@ -144,9 +145,9 @@ struct python_mba {
         build_surface(nb_u, nb_v, scale);
     }
     
-    void build_surface(int32 nb_u, int32 nb_v, float64 scale)
+    void build_surface(uint32 nb_u, uint32 nb_v, float64 scale)
     {
-        surf = mba->getSplineSurface();
+        UCBspl::SplineSurface surf = mba->getSplineSurface();
 
         float64 u_min = surf.umin();
 	    float64 v_min = surf.vmin();
@@ -157,7 +158,7 @@ struct python_mba {
 
         //compute the vertices
         uint32 vertex_count = nb_u * nb_v;
-        vertices_ = Eigen::MatrixXd(vertex_count, 3)
+        vertices_ = Eigen::MatrixXd(vertex_count, 3);
         for(uint32 i = 0 ; i < nb_v ; ++i)
         {
             float64 v = v_min + i * dv;
@@ -172,9 +173,9 @@ struct python_mba {
         uint32 triangle_count = 2 * (nb_u - 1) * (nb_v - 1);
         triangles_ = Eigen::MatrixXi(triangle_count, 3);
         uint32 idx = 0;
-        for(uint32 i = 0 ; i < nb_v ; ++i)
+        for(uint32 y = 0 ; y < nb_v - 1 ; ++y)
         {
-            for(uint32 j = 0 ; j < nb_u; ++j)
+            for(uint32 x = 0 ; x < nb_u - 1; ++x)
             {
                 triangles_(idx) = Eigen::VectorXi(
                             (x + 0) + (y + 0) * nb_u),
@@ -277,6 +278,7 @@ void register_mba(py::module &m) {
         // .def("u_max", &python_mba::umax)
         // .def("v_max", &python_mba::vmax)
         //.def("f", &python_mba::f, py::arg("u"), py::arg("v"));
+        );
 
 
 }   
