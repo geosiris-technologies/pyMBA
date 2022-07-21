@@ -33,11 +33,13 @@ struct python_mba {
     py::array_t<float64> values_;
 
     std::shared_ptr<MBA> mba;
-    UCBspl::SplineSurface surf;
 
     float64 level_;
     float64 extension_u_;
     float64 extension_v_;
+
+    Eigen::MatrixXd vertices_;
+    Eigen::MatrixXd triangles_;
 
     python_mba(
         py::array_t<float64> values,
@@ -55,23 +57,8 @@ struct python_mba {
         level_ = level;
     }
 
-    std::vector<float64> make_available(py::array_t<float64>& numpy_array)
+    void compute_fault(float64 nb_u, float64 nb_v, float64 scale)
     {
-        std::vector<float64> data(numpy_array.size());
-        std::copy(numpy_array.data(), numpy_array.data()+numpy_array.size(), data.begin());
-        return data;
-    }
-
-    py::array do_slice(py::array a, py::int_ start, py::int_ stop) 
-    {
-        auto res = a[py::make_tuple(py::slice(start, stop, 1), py::slice(start, stop, 1))];
-        return res;
-    }
-
-    void compute_fault()
-    {
-        // Eigen::MatrixXd eig_mat(r.shape(0), r.shape(1));
-
         auto r = values_.unchecked<2>(); // x must have ndim = 2; can be non-writeable
 
         std::vector<Eigen::Vector3d> points(r.shape(0));
@@ -95,7 +82,7 @@ struct python_mba {
         projectionTransform.block<3,3>(0,0) = eigen_vectors_pca.transpose();
         projectionTransform.block<3,1>(0,3) = -1. * (projectionTransform.block<3,3>(0,0) * pca_centroid.head<3>());
 
-        Eigen::Matrix4d projectionTransformInv = projectionTransform.inverse();
+        projectionTransformInv = projectionTransform.inverse();
 
         std::vector<double> z_save(points.size());
         std::vector<Eigen::Vector3d> proj_points(points.size());
@@ -111,7 +98,6 @@ struct python_mba {
         std::vector<uint32> polygon = convex_hull(proj_points);
         auto [center, axis0, axis1, extent0, extent1, area] = min_area_rectangle_of_hull<Eigen::Vector3d>(polygon, proj_points);
 
-        Eigen::Matrix3d rot;
         rot.row(0) = axis0;
         rot.row(1) = axis1;
         rot.row(2) = Eigen::Vector3d(0.,0.,1.);
@@ -134,9 +120,11 @@ struct python_mba {
         }
 
         compute(x_arr, y_arr, z_arr);
+
+
     }
 
-    void compute_horizon()
+    void compute_horizon(int32 nb_u, int32 nb_v, float64 scale)
     {   
         auto r = values_.unchecked<2>(); // x must have ndim = 3; can be non-writeable
 
@@ -151,19 +139,55 @@ struct python_mba {
             (*z_arr)[i] = r(i,2);
         }
 
-        // for (auto it = begin(x_arr); it != end(x_arr); ++it)
-        //     std::cout << *it << " ";
-        // std::cout << std::endl;
-
-        // for (auto it = begin(y_arr); it != end(y_arr); ++it)
-        //     std::cout << *it << " ";
-        // std::cout << std::endl;
-
-        // for (auto it = begin(z_arr); it != end(z_arr); ++it)
-        //     std::cout << *it << " ";
-        // std::cout << std::endl;
-
         compute(x_arr, y_arr, z_arr);
+
+        build_surface(nb_u, nb_v, scale);
+    }
+    
+    void build_surface(int32 nb_u, int32 nb_v, float64 scale)
+    {
+        surf = mba->getSplineSurface();
+
+        float64 u_min = surf.umin();
+	    float64 v_min = surf.vmin();
+	    float64 u_max = surf.umax();
+	    float64 v_max = surf.vmax();
+	    float64 du = (u_max - u_min)/(float64(nb_u-1));
+	    float64 dv = (v_max - v_min)/(float64(nb_v-1));
+
+        //compute the vertices
+        uint32 vertex_count = nb_u * nb_v;
+        vertices_ = Eigen::MatrixXd(vertex_count, 3)
+        for(uint32 i = 0 ; i < nb_v ; ++i)
+        {
+            float64 v = v_min + i * dv;
+            for(uint32 j = 0 ; j < nb_u; ++j)
+            {
+                u = u_min + j * du;
+                vertices(i*nb_u+j) = Eigen::VectorXd(u, v, surf.f(u,v));
+            }
+        }
+
+        //compute the faces
+        uint32 triangle_count = 2 * (nb_u - 1) * (nb_v - 1);
+        triangles_ = Eigen::MatrixXi(triangle_count, 3);
+        uint32 idx = 0;
+        for(uint32 i = 0 ; i < nb_v ; ++i)
+        {
+            for(uint32 j = 0 ; j < nb_u; ++j)
+            {
+                triangles_(idx) = Eigen::VectorXi(
+                            (x + 0) + (y + 0) * nb_u),
+                            ((x + 1) + (y + 0) * nb_u),
+                            ((x + 0) + (y + 1) * nb_u));
+                ++idx;
+                triangles_(idx) = Eigen::VectorXi(
+                            (x + 1) + (y + 0) * nb_u),
+                            ((x + 1) + (y + 1) * nb_u),
+                            ((x + 0) + (y + 1) * nb_u));
+                ++idx;
+            }
+        }
     }
 
     void compute(std::shared_ptr<std::vector<float64>> x_arr,
@@ -200,34 +224,36 @@ struct python_mba {
         if (m0 == 0)
             m0 = 1;
         mba->MBAalg(m0, n0, level_);
-
-        surf = mba->getSplineSurface();
     }
 
-    float64 umin()
-    {
-        return surf.umin();
-    }
+    const Eigen::MatrixXd &vertices() { return vertices_; }
+    const Eigen::MatrixXd &triangles() { return triangles_; }
 
-	float64 vmin()
-    {
-        return surf.vmin();
-    }
 
-    float64 umax()
-    {
-        return surf.umax();
-    }
+    // float64 umin()
+    // {
+    //     return surf.umin();
+    // }
+
+	// float64 vmin()
+    // {
+    //     return surf.vmin();
+    // }
+
+    // float64 umax()
+    // {
+    //     return surf.umax();
+    // }
     
-    float64 vmax()
-    {
-        return surf.vmax();
-    }
+    // float64 vmax()
+    // {
+    //     return surf.vmax();
+    // }
 
-    float64 f(float64 u, float64 v)
-    {
-        return surf.f(u, v);
-    }
+    // float64 f(float64 u, float64 v)
+    // {
+    //     return surf.f(u, v);
+    // }
 
     // TODO check memory cleaning
 };
@@ -244,13 +270,13 @@ void register_mba(py::module &m) {
                     uint32
                     >(), py::arg("values"), py::arg("extension_u"), py::arg("extension_v"), py::arg("level")
             )
-        .def("compute_horizon", &python_mba::compute_horizon)
-        .def("compute_fault", &python_mba::compute_fault)
-        .def("u_min", &python_mba::umin)
-        .def("v_min", &python_mba::vmin)
-        .def("u_max", &python_mba::umax)
-        .def("v_max", &python_mba::vmax)
-        .def("f", &python_mba::f, py::arg("u"), py::arg("v"));
+        .def("compute_horizon", &python_mba::compute_horizon, py::arg("nb_u"), py::arg("nb_v"), py::arg("scale"))
+        .def("compute_fault", &python_mba::compute_fault, py::arg("nb_u"), py::arg("nb_v"), py::arg("scale"))
+        // .def("u_min", &python_mba::umin)
+        // .def("v_min", &python_mba::vmin)
+        // .def("u_max", &python_mba::umax)
+        // .def("v_max", &python_mba::vmax)
+        //.def("f", &python_mba::f, py::arg("u"), py::arg("v"));
 
 
 }   
