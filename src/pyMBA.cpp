@@ -31,12 +31,11 @@ auto inline end(std::shared_ptr<T> ptr) -> typename T::iterator { return ptr->en
 struct python_mba {
     
     py::array_t<float64> values_;
-
-    std::shared_ptr<MBA> mba;
-
-    float64 level_;
     float64 extension_u_;
     float64 extension_v_;
+    float64 level_;
+
+    std::shared_ptr<MBA> mba;
 
     Eigen::MatrixXd vertices_;
     Eigen::MatrixXi triangles_;
@@ -58,6 +57,8 @@ struct python_mba {
         extension_u_ = extension_u;
         extension_v_ = extension_v;
         level_ = level;
+        vertex_count = 0;
+        triangle_count = 0;
     }
 
     void compute_fault(float64 nb_u, float64 nb_v, float64 scale)
