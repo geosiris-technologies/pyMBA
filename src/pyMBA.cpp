@@ -283,6 +283,8 @@ void register_mba(py::module &m) {
         .def("compute_fault", &python_mba::compute_fault, py::arg("nb_u"), py::arg("nb_v"), py::arg("scale"))
         .def("vertex_count", &python_mba::vertex_count)
         .def("triangle_count", &python_mba::triangle_count)
+        .def("vertices", &python_mba::vertices, py::return_value_policy::reference_internal)
+        .def("triangles", &python_mba::triangles, py::return_value_policy::reference_internal)
         ;
         // .def("u_max", &python_mba::umax)
         // .def("v_max", &python_mba::vmax)
