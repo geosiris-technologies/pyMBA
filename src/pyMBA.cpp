@@ -164,8 +164,8 @@ struct python_mba {
             float64 v = v_min + i * dv;
             for(uint32 j = 0 ; j < nb_u; ++j)
             {
-                u = u_min + j * du;
-                vertices(i*nb_u+j) = Eigen::VectorXd(u, v, surf.f(u,v));
+                float64 u = u_min + j * du;
+                vertices_(i*nb_u+j) = Eigen::RowVectorXd(u, v, surf.f(u,v));
             }
         }
 
@@ -177,12 +177,12 @@ struct python_mba {
         {
             for(uint32 x = 0 ; x < nb_u - 1; ++x)
             {
-                triangles_(idx) = Eigen::VectorXi(
+                triangles_(idx) = Eigen::RowVectorXi(
                             (x + 0) + (y + 0) * nb_u),
                             ((x + 1) + (y + 0) * nb_u),
                             ((x + 0) + (y + 1) * nb_u));
                 ++idx;
-                triangles_(idx) = Eigen::VectorXi(
+                triangles_(idx) = Eigen::RowVectorXi(
                             (x + 1) + (y + 0) * nb_u),
                             ((x + 1) + (y + 1) * nb_u),
                             ((x + 0) + (y + 1) * nb_u));
@@ -228,7 +228,7 @@ struct python_mba {
     }
 
     const Eigen::MatrixXd &vertices() { return vertices_; }
-    const Eigen::MatrixXd &triangles() { return triangles_; }
+    const Eigen::MatrixXi &triangles() { return triangles_; }
 
 
     // float64 umin()
@@ -272,13 +272,13 @@ void register_mba(py::module &m) {
                     >(), py::arg("values"), py::arg("extension_u"), py::arg("extension_v"), py::arg("level")
             )
         .def("compute_horizon", &python_mba::compute_horizon, py::arg("nb_u"), py::arg("nb_v"), py::arg("scale"))
-        .def("compute_fault", &python_mba::compute_fault, py::arg("nb_u"), py::arg("nb_v"), py::arg("scale"))
+        .def("compute_fault", &python_mba::compute_fault, py::arg("nb_u"), py::arg("nb_v"), py::arg("scale"));
         // .def("u_min", &python_mba::umin)
         // .def("v_min", &python_mba::vmin)
         // .def("u_max", &python_mba::umax)
         // .def("v_max", &python_mba::vmax)
         //.def("f", &python_mba::f, py::arg("u"), py::arg("v"));
-        );
+        
 
 
 }   
