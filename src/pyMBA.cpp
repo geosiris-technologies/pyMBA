@@ -280,9 +280,10 @@ void register_mba(py::module &m) {
                     >(), py::arg("values"), py::arg("extension_u"), py::arg("extension_v"), py::arg("level")
             )
         .def("compute_horizon", &python_mba::compute_horizon, py::arg("nb_u"), py::arg("nb_v"), py::arg("scale"))
-        .def("compute_fault", &python_mba::compute_fault, py::arg("nb_u"), py::arg("nb_v"), py::arg("scale"));
-        // .def("u_min", &python_mba::umin)
-        // .def("v_min", &python_mba::vmin)
+        .def("compute_fault", &python_mba::compute_fault, py::arg("nb_u"), py::arg("nb_v"), py::arg("scale"))
+        .def("vertex_count", &python_mba::vertex_count)
+        .def("triangle_count", &python_mba::triangle_count)
+        ;
         // .def("u_max", &python_mba::umax)
         // .def("v_max", &python_mba::vmax)
         //.def("f", &python_mba::f, py::arg("u"), py::arg("v"));
