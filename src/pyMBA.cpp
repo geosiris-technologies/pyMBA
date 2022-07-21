@@ -41,6 +41,9 @@ struct python_mba {
     Eigen::MatrixXd vertices_;
     Eigen::MatrixXi triangles_;
 
+    uint32 vertex_count;
+    uint32 triangle_count;
+
     python_mba(
         py::array_t<float64> values,
         float64 extension_u,
@@ -157,7 +160,7 @@ struct python_mba {
 	    float64 dv = (v_max - v_min)/(float64(nb_v-1));
 
         //compute the vertices
-        uint32 vertex_count = nb_u * nb_v;
+        vertex_count = nb_u * nb_v;
         vertices_ = Eigen::MatrixXd(vertex_count, 3);
         for(uint32 i = 0 ; i < nb_v ; ++i)
         {
@@ -170,7 +173,7 @@ struct python_mba {
         }
 
         //compute the faces
-        uint32 triangle_count = 2 * (nb_u - 1) * (nb_v - 1);
+        triangle_count = 2 * (nb_u - 1) * (nb_v - 1);
         triangles_ = Eigen::MatrixXi(triangle_count, 3);
         uint32 idx = 0;
         for(uint32 y = 0 ; y < nb_v - 1 ; ++y)
@@ -231,11 +234,15 @@ struct python_mba {
     const Eigen::MatrixXi &triangles() { return triangles_; }
 
 
-    // float64 umin()
-    // {
-    //     return surf.umin();
-    // }
-
+    uint32 triangle_count()
+    {
+        return triangle_count;
+    }
+    
+    uint32 vertex_count()
+    {
+        return vertex_count;
+    }
 	// float64 vmin()
     // {
     //     return surf.vmin();
