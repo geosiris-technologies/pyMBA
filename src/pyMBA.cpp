@@ -132,10 +132,10 @@ struct python_mba {
 
         Eigen::Matrix3d rot_t = rot.transpose();
 
-        for(uint32 i = 0 ; i < vertex_count ; ++i)
+        for(uint32 i = 0 ; i < vertex_count_ ; ++i)
         {
             Eigen::RowVector3d rp = vertices_.row(i);
-            Eigen::Vector3d p = rp.tranpose();
+            Eigen::Vector3d p = rp.transpose();
             p = rot_t * p;
             Eigen::Vector4d temp = projectionTransformInv * p.homogeneous();
             p = temp.head<3>();
