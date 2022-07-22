@@ -12,6 +12,8 @@
 
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
+#include <pybind11/eigen.h>
+
 // #include <pybind11/functional.h>
 // #include <pybind11/stl.h>
 
@@ -231,8 +233,8 @@ struct python_mba {
         mba->MBAalg(m0, n0, level_);
     }
 
-    const Eigen::MatrixXd &vertices() { return vertices_; }
-    const Eigen::MatrixXi &triangles() { return triangles_; }
+    const Eigen::MatrixXd & vertices() { return vertices_; }
+    const Eigen::MatrixXi & triangles() { return triangles_; }
 
 
     uint32 triangle_count()
